@@ -1,14 +1,18 @@
-package lib
+package computer
+
+import "fmt"
 
 const maxTick = 5
 const width, height = 5, 5
 const up, right, down, left = 0, 1, 2, 3
+const block = 1;
+const apple = 2;
 
 func moveSnake(snake [][2]int, path []int) [][2]int {
 
-    for direction := range path {
-        snakeHead := getSnakeHead(snake)
-        nextPosition := getAdjacentPosition(snakeHead, direction)
+    for move := range path {
+        snakeHead := GetSnakeHead(snake)
+        nextPosition := getAdjacentPosition(snakeHead, move)
 
         snake = snake[1:]
         snake = append(snake, nextPosition)
@@ -17,11 +21,11 @@ func moveSnake(snake [][2]int, path []int) [][2]int {
     return snake
 }
 
-func getAdjacentPosition(position [2]int, direction int) [2]int {
+func getAdjacentPosition(position [2]int, move int) [2]int {
     var x = position[0] // @FIXME: use destructuring
     var y = position[1]
 
-    switch direction {
+    switch move {
     case up:
         return [2]int{x - 1, y}
     case right:
@@ -36,12 +40,15 @@ func getAdjacentPosition(position [2]int, direction int) [2]int {
 }
 
 func isSnakeHeadAtPosition(snake [][2]int, position [2]int) bool {
-    return getSnakeHead(snake) == position
+    return GetSnakeHead(snake) == position
 }
 
-func isOutsideBoundingBox(position [2]int) bool {
+func IsOutsideBoundingBox(position [2]int, grid [width][height]int) bool {
     var x = position[0] // @FIXME: use destructuring
     var y = position[1]
+
+    var width = len(grid[0])
+    var height = len(grid)
 
     if x > width || x < 0 || y > height || y < 0 {
         return true
@@ -50,30 +57,43 @@ func isOutsideBoundingBox(position [2]int) bool {
     return false
 }
 
-func getMoveScore(snake [][2]int, apple [2]int) int {
-    if isSnakeHeadAtPosition(snake, apple) {
+func getMoveScore(move int, snake [][2]int, apple [2]int) int {
+    newSnake := moveSnake(snake, []int{move})
+
+    if isSnakeHeadAtPosition(newSnake, apple) {
         return 10
     }
 
     return 1
 }
 
-func getPossibleDirections(grid [width][height]int, snake [][2]int) []int {
-    var head = getSnakeHead(snake)
+func IsEmptyCell(grid [width][height]int, position [2]int) bool {
+    var x = position[0] // @FIXME: use destructuring
+    var y = position[1]
 
-    var possibleDirections []int
-    for _, direction := range []int{up, right, down, left} {
-        var adjacentPosition = getAdjacentPosition(head, direction)
+    if grid[x][y] != block {
+        return true
+    }
 
-        if !isOutsideBoundingBox(adjacentPosition) {
-            possibleDirections = append(possibleDirections, direction)
+    return false
+}
+
+func getPossibleMoves(grid [width][height]int, snake [][2]int) []int {
+    var head = GetSnakeHead(snake)
+
+    var possibleMoves []int
+    for _, move := range []int{up, right, down, left} {
+        var adjacentPosition = getAdjacentPosition(head, move)
+
+        if !IsOutsideBoundingBox(adjacentPosition, grid) && IsEmptyCell(grid, adjacentPosition) {
+            possibleMoves = append(possibleMoves, move)
         }
 	}
 
-    return possibleDirections
+    return possibleMoves
 }
 
-func getSnakeHead(snake [][2]int) [2]int {
+func GetSnakeHead(snake [][2]int) [2]int {
     return snake[len(snake) - 1]
 }
 
@@ -85,18 +105,22 @@ func GetPath(grid [width][height]int, snake [][2]int, apple [2]int) []int {
     var paths [][]int
     var scores []int
 
-    var possibleDirections = getPossibleDirections(grid, snake)
+    var possibleMoves = getPossibleMoves(grid, snake)
 
-    for _, possibleDirection := range possibleDirections {
-        paths = append(paths, []int{possibleDirection})
+    for _, possibleMove := range possibleMoves {
+        scores = append(scores, getMoveScore(possibleMove, snake, apple))
+        paths = append(paths, []int{possibleMove})
     }
 
     for tick := 1; tick < maxTick; tick++ {
-        for index, path := range paths {
+        for _, path := range paths {
             newSnake := moveSnake(snake, path)
+            fmt.Println(newSnake)
 
-            for _, possibleDirection := range getPossibleDirections(grid, newSnake) {
-                paths[index] = append(paths[index], possibleDirection)
+            for _, possibleMove := range getPossibleMoves(grid, newSnake) {
+                newPath := append(path, possibleMove)
+                scores = append(scores, getMoveScore(possibleMove, newSnake, apple))
+                paths = append(paths, newPath)
             }
         }
     }
