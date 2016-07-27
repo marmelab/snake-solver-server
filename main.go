@@ -10,26 +10,25 @@ import (
 const width, height = 5, 5
 
 func main() {
-    grid := [width][height]int{
-        {1, 1, 1, 0, 0},
-        {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 2},
+    type Data struct {
+        // Width int `json:"width" xml:"width" form:"width"` // @TODO
+        // Height int `json:"height" xml:"height" form:"height"` // @TODO
+        Snake [][2]int `json:"snake" xml:"snake" form:"snake"`
+        Apple [2]int `json:"apple" xml:"apple" form:"apple"`
     }
-
-    snake := [][2]int{
-        {0, 0},
-        {0, 1},
-        {0, 2},
-    }
-
-    apple := [2]int{4, 4}
 
     e := echo.New()
-    e.GET("/", func(c echo.Context) error {
-        path := lib.GetPath(grid, snake, apple)
+    e.POST("/", func(c echo.Context) error {
+        d := new(Data)
+        if err := c.Bind(d); err != nil {
+            return err
+        }
+
+        grid := computer.InitializeGrid(d.Snake, d.Apple)
+        path := computer.GetPath(grid, d.Snake, d.Apple)
+
         return c.JSON(http.StatusOK, path)
     })
+
     e.Run(standard.New(":1323"))
 }

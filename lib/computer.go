@@ -48,7 +48,7 @@ func IsOutsideBoundingBox(position [2]int, grid [width][height]int) bool {
     var width = len(grid[0])
     var height = len(grid)
 
-    if x > width || x < 0 || y > height || y < 0 {
+    if x >= width || x < 0 || y >= height || y < 0 {
         return true
     }
 
@@ -95,6 +95,29 @@ func GetSnakeHead(snake [][2]int) [2]int {
     return snake[len(snake) - 1]
 }
 
+func InitializeGrid(snake [][2]int, apple [2]int) [width][height]int {
+    var grid [width][height]int
+    var x, y int
+    for x = 0; x < width; x++ {
+        for y = 0; y < height; y++ {
+            grid[x][y] = 0
+        }
+    }
+
+    for _, snakePosition := range snake {
+        xSnakePosition := snakePosition[0]
+        ySnakePosition := snakePosition[1]
+
+        grid[xSnakePosition][ySnakePosition] = block;
+    }
+
+    xApple := apple[0]
+    yApple := apple[1]
+    grid[xApple][yApple] = 2
+
+    return grid
+}
+
 func getBestPath(paths [][]int, scores []int) []int {
     return paths[0] // @TODO
 }
@@ -103,23 +126,28 @@ func GetPath(grid [width][height]int, snake [][2]int, apple [2]int) []int {
     var paths [][]int
     var scores []int
 
-    var possibleMoves = GetPossibleMoves(grid, snake)
-
-    for _, possibleMove := range possibleMoves {
-        scores = append(scores, getMoveScore(possibleMove, snake, apple))
+    for _, possibleMove := range GetPossibleMoves(grid, snake) {
         paths = append(paths, []int{possibleMove})
+        scores = append(scores, getMoveScore(possibleMove, snake, apple))
     }
 
     for tick := 1; tick < maxTick; tick++ {
+        var newPaths [][]int
+        var newScores []int
+
         for _, path := range paths {
             newSnake := MoveSnake(snake, path)
+            grid = InitializeGrid(newSnake, apple)
 
             for _, possibleMove := range GetPossibleMoves(grid, newSnake) {
                 newPath := append(path, possibleMove)
-                scores = append(scores, getMoveScore(possibleMove, newSnake, apple))
-                paths = append(paths, newPath)
+                newPaths = append(newPaths, newPath)
+                newScores = append(newScores, getMoveScore(possibleMove, newSnake, apple))
             }
         }
+
+        paths = newPaths
+        scores = newScores
     }
 
     return getBestPath(paths, scores)

@@ -48,6 +48,7 @@ var _ = Describe("Computer", func() {
         }
 
         Expect(IsOutsideBoundingBox([2]int{-1, 0}, grid)).To(Equal(true))
+        Expect(IsOutsideBoundingBox([2]int{0, 5}, grid)).To(Equal(true))
         Expect(IsOutsideBoundingBox([2]int{0, 0}, grid)).To(Equal(false))
     })
 
@@ -92,6 +93,25 @@ var _ = Describe("Computer", func() {
             {0, 3},
             {0, 4},
             {1, 4},
+        }))
+    })
+
+    It("should initialize grid", func() {
+        snake := [][2]int{
+            {2, 0},
+            {2, 1},
+            {2, 2},
+        }
+
+        apple := [2]int{4, 4}
+
+        grid := InitializeGrid(snake, apple)
+        Expect(grid).To(Equal([width][height]int{
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {1, 1, 1, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 2},
         }))
     })
 
