@@ -3,6 +3,7 @@ package main
 import (
     "net/http"
     "github.com/labstack/echo"
+    "github.com/labstack/echo/middleware"
     "github.com/labstack/echo/engine/standard"
     "github.com/marmelab/snake-solver-server/lib"
 )
@@ -18,6 +19,12 @@ func main() {
     }
 
     e := echo.New()
+
+    e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+        AllowOrigins: []string{"http://localhost:9000", "http://localhost"},
+        AllowCredentials: true,
+    }))
+
     e.POST("/", func(c echo.Context) error {
         d := new(Data)
         if err := c.Bind(d); err != nil {

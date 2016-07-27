@@ -1,6 +1,8 @@
 package computer
 
-const maxTick = 5
+import "sort"
+
+const maxTick = 6
 const width, height = 5, 5
 const up, right, down, left = 0, 1, 2, 3
 const block = 1;
@@ -119,7 +121,14 @@ func InitializeGrid(snake [][2]int, apple [2]int) [width][height]int {
 }
 
 func getBestPath(paths [][]int, scores []int) []int {
-    return paths[0] // @TODO
+    for index, score := range scores {
+        if score > 1 {
+            return paths[index]
+        }
+    }
+
+    sort.Sort(sort.Reverse(sort.IntSlice(scores)))
+    return paths[0]
 }
 
 func GetPath(grid [width][height]int, snake [][2]int, apple [2]int) []int {
