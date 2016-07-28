@@ -9,12 +9,10 @@ import (
     "github.com/marmelab/snake-solver-server/lib"
 )
 
-const width, height = 5, 5
-
 func main() {
     type Data struct {
-        // Width int `json:"width" xml:"width" form:"width"` // @TODO
-        // Height int `json:"height" xml:"height" form:"height"` // @TODO
+        Width int `json:"width" xml:"width" form:"width"`
+        Height int `json:"height" xml:"height" form:"height"`
         Snake [][2]int `json:"snake" xml:"snake" form:"snake"`
         Apple [2]int `json:"apple" xml:"apple" form:"apple"`
     }
@@ -32,8 +30,7 @@ func main() {
             return err
         }
 
-        grid := computer.InitializeGrid(d.Snake, d.Apple)
-        path := computer.GetPath(grid, d.Snake, d.Apple)
+        path := computer.GetPath(d.Width, d.Height, d.Snake, d.Apple)
         fmt.Println(path)
 
         return c.JSON(http.StatusOK, path)

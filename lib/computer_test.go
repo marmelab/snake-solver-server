@@ -22,7 +22,7 @@ var _ = Describe("Computer", func() {
     })
 
     It("should check empty cell", func() {
-        grid := [width][height]int{
+        grid := [][]int{
             {1, 1, 1, 0, 0},
             {0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0},
@@ -35,7 +35,7 @@ var _ = Describe("Computer", func() {
     })
 
     It("should check outside bounding box", func() {
-        grid := [width][height]int{
+        grid := [][]int{
             {1, 1, 1, 0, 0},
             {0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0},
@@ -56,7 +56,7 @@ var _ = Describe("Computer", func() {
     })
 
     It("should return possible moves", func() {
-        grid := [width][height]int{
+        grid := [][]int{
             {1, 1, 1, 0, 0},
             {0, 0, 1, 0, 0},
             {2, 1, 1, 0, 0},
@@ -101,8 +101,8 @@ var _ = Describe("Computer", func() {
 
         apple := [2]int{4, 4}
 
-        grid := InitializeGrid(snake, apple)
-        Expect(grid).To(Equal([width][height]int{
+        grid := initializeGrid(5, 5, snake, apple)
+        Expect(grid).To(Equal([][]int{
             {0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0},
             {1, 1, 1, 0, 0},
@@ -111,15 +111,14 @@ var _ = Describe("Computer", func() {
         }))
     })
 
+    /*
+        {1, 1, 1, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 2, 0, 0},
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0},
+    */
     It("should find path", func() {
-        grid := [width][height]int{
-            {1, 1, 1, 0, 0},
-            {0, 0, 0, 0, 0},
-            {0, 0, 2, 0, 0},
-            {0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0},
-        }
-
         snake := [][2]int{
             {0, 0},
             {0, 1},
@@ -128,7 +127,25 @@ var _ = Describe("Computer", func() {
 
         apple := [2]int{2, 2}
 
-        path := GetPath(grid, snake, apple)
+        path := GetPath(5, 5, snake, apple)
         Expect(path[:2]).To(Equal([]int{down, down}))
+    })
+
+    /*
+        {1, 1, 1, 0, 0},
+        {1, 0, 0, 0, 0},
+        {1, 0, 0, 0, 0},
+        {1, 1, 1, 1, 1},
+        {0, 2, 0, 0, 0},
+    */
+    PIt("should not enter in closed zone", func() {
+        snake := [][2]int{
+            {0, 2}, {0, 1}, {0, 0}, {1, 0}, {2, 0}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4},
+        }
+
+        apple := [2]int{4, 1}
+
+        path := GetPath(5, 5, snake, apple)
+        Expect(path[:1][0]).To(Equal(up))
     })
 })

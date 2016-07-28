@@ -3,7 +3,6 @@ package computer
 import "sort"
 
 const maxTick = 6
-const width, height = 5, 5
 const up, right, down, left = 0, 1, 2, 3
 const block = 1;
 const apple = 2;
@@ -54,7 +53,7 @@ func isSnakeHeadAtPosition(snake [][2]int, position [2]int) bool {
     return getSnakeHead(snake) == position
 }
 
-func isOutsideBoundingBox(position [2]int, grid [width][height]int) bool {
+func isOutsideBoundingBox(position [2]int, grid [][]int) bool {
     var x = position[0] // @FIXME: use destructuring
     var y = position[1]
 
@@ -68,7 +67,7 @@ func isOutsideBoundingBox(position [2]int, grid [width][height]int) bool {
     return false
 }
 
-func isEmptyCell(grid [width][height]int, position [2]int) bool {
+func isEmptyCell(grid [][]int, position [2]int) bool {
     var x = position[0] // @FIXME: use destructuring
     var y = position[1]
 
@@ -79,14 +78,15 @@ func isEmptyCell(grid [width][height]int, position [2]int) bool {
     return false
 }
 
-func getPossibleMoves(grid [width][height]int, snake [][2]int) []int {
-    var head = getSnakeHead(snake)
+func getPossibleMoves(grid [][]int, snake [][2]int) []int {
+    var snakeHead = getSnakeHead(snake)
+    var snakeTail = getSnakeTail(snake)
 
     var possibleMoves []int
     for _, move := range []int{up, right, down, left} {
-        var adjacentPosition = getAdjacentPosition(head, move)
+        var adjacentPosition = getAdjacentPosition(snakeHead, move)
 
-        if !isOutsideBoundingBox(adjacentPosition, grid) && isEmptyCell(grid, adjacentPosition) {
+        if (!isOutsideBoundingBox(adjacentPosition, grid) && isEmptyCell(grid, adjacentPosition)) || adjacentPosition == snakeTail {
             possibleMoves = append(possibleMoves, move)
         }
 	}
@@ -98,14 +98,19 @@ func getSnakeHead(snake [][2]int) [2]int {
     return snake[len(snake) - 1]
 }
 
-func InitializeGrid(snake [][2]int, apple [2]int) [width][height]int {
-    var grid [width][height]int
-    var x, y int
-    for x = 0; x < width; x++ {
-        for y = 0; y < height; y++ {
-            grid[x][y] = 0
-        }
-    }
+func getSnakeTail(snake [][2]int) [2]int {
+    return snake[0]
+}
+
+func initializeGrid(width int, height int, snake [][2]int, apple [2]int) [][]int {
+    var grid [][]int
+
+    for y := 0; y < height; y++ {
+		grid = append(grid, []int{})
+		for x := 0; x < width; x++ {
+			grid[y] = append(grid[y], 0)
+		}
+	}
 
     for _, snakePosition := range snake {
         xSnakePosition := snakePosition[0]
@@ -121,10 +126,14 @@ func InitializeGrid(snake [][2]int, apple [2]int) [width][height]int {
     return grid
 }
 
-func getMoveScore(move int, snake [][2]int, apple [2]int, tick int) float32 {
+func getMoveScore(grid [][]int, move int, snake [][2]int, apple [2]int, tick int) float32 {
     newSnake := moveSnake(snake, []int{move})
 
     if isSnakeHeadAtPosition(newSnake, apple) {
+        if len(getPossibleMoves(grid, newSnake)) == 0 {
+            return float32(0)
+        }
+
         return (float32(1) / float32(tick)) * float32(100)
     }
 
@@ -141,13 +150,15 @@ func getBestPath(paths [][]int, scores []float32) path {
     return pathsSelected[0]
 }
 
-func GetPath(grid [width][height]int, snake [][2]int, apple [2]int) []int {
+func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
     var paths [][]int
     var scores []float32
 
+    grid := initializeGrid(width, height, snake, apple)
+
     for _, possibleMove := range getPossibleMoves(grid, snake) {
         paths = append(paths, []int{possibleMove})
-        scores = append(scores, getMoveScore(possibleMove, snake, apple, 1))
+        scores = append(scores, getMoveScore(grid, possibleMove, snake, apple, 1))
     }
 
     for tick := 1; tick < maxTick; tick++ {
@@ -156,12 +167,12 @@ func GetPath(grid [width][height]int, snake [][2]int, apple [2]int) []int {
 
         for index, path := range paths {
             newSnake := moveSnake(snake, path)
-            grid = InitializeGrid(newSnake, apple)
+            grid = initializeGrid(width, height, newSnake, apple)
 
             for _, possibleMove := range getPossibleMoves(grid, newSnake) {
                 newPath := append(path, possibleMove)
                 newPaths = append(newPaths, newPath)
-                newScore := getMoveScore(possibleMove, newSnake, apple, tick)
+                newScore := getMoveScore(grid, possibleMove, newSnake, apple, tick)
 
                 if newScore > scores[index] {
                     newScores = append(newScores, newScore)
