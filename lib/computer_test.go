@@ -1,14 +1,10 @@
-package computer_test
+package computer
 
 import (
-    . "github.com/marmelab/snake-solver-server/lib"
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
     "testing"
 )
-
-const width, height = 5, 5
-const up, right, down, left = 0, 1, 2, 3
 
 func TestComputer(t *testing.T) {
     RegisterFailHandler(Fail)
@@ -22,7 +18,7 @@ var _ = Describe("Computer", func() {
             {0, 1},
             {0, 2},
         }
-        Expect(GetSnakeHead(snake)).To(Equal([2]int{0, 2}))
+        Expect(getSnakeHead(snake)).To(Equal([2]int{0, 2}))
     })
 
     It("should check empty cell", func() {
@@ -34,8 +30,8 @@ var _ = Describe("Computer", func() {
             {0, 0, 0, 0, 2},
         }
 
-        Expect(IsEmptyCell(grid, [2]int{0, 2})).To(Equal(false))
-        Expect(IsEmptyCell(grid, [2]int{2, 2})).To(Equal(true))
+        Expect(isEmptyCell(grid, [2]int{0, 2})).To(Equal(false))
+        Expect(isEmptyCell(grid, [2]int{2, 2})).To(Equal(true))
     })
 
     It("should check outside bounding box", func() {
@@ -47,16 +43,16 @@ var _ = Describe("Computer", func() {
             {0, 0, 0, 0, 2},
         }
 
-        Expect(IsOutsideBoundingBox([2]int{-1, 0}, grid)).To(Equal(true))
-        Expect(IsOutsideBoundingBox([2]int{0, 5}, grid)).To(Equal(true))
-        Expect(IsOutsideBoundingBox([2]int{0, 0}, grid)).To(Equal(false))
+        Expect(isOutsideBoundingBox([2]int{-1, 0}, grid)).To(Equal(true))
+        Expect(isOutsideBoundingBox([2]int{0, 5}, grid)).To(Equal(true))
+        Expect(isOutsideBoundingBox([2]int{0, 0}, grid)).To(Equal(false))
     })
 
     It("should return adjacent position", func() {
-        Expect(GetAdjacentPosition([2]int{1, 0}, up)).To(Equal([2]int{0, 0}))
-        Expect(GetAdjacentPosition([2]int{0, 0}, right)).To(Equal([2]int{0, 1}))
-        Expect(GetAdjacentPosition([2]int{0, 0}, down)).To(Equal([2]int{1, 0}))
-        Expect(GetAdjacentPosition([2]int{0, 1}, left)).To(Equal([2]int{0, 0}))
+        Expect(getAdjacentPosition([2]int{1, 0}, up)).To(Equal([2]int{0, 0}))
+        Expect(getAdjacentPosition([2]int{0, 0}, right)).To(Equal([2]int{0, 1}))
+        Expect(getAdjacentPosition([2]int{0, 0}, down)).To(Equal([2]int{1, 0}))
+        Expect(getAdjacentPosition([2]int{0, 1}, left)).To(Equal([2]int{0, 0}))
     })
 
     It("should return possible moves", func() {
@@ -77,7 +73,7 @@ var _ = Describe("Computer", func() {
             {2, 1},
         }
 
-        Expect(GetPossibleMoves(grid, snake)).To(Equal([]int{0, 2, 3}))
+        Expect(getPossibleMoves(grid, snake)).To(Equal([]int{0, 2, 3}))
     })
 
     It("should move snake", func() {
@@ -87,7 +83,7 @@ var _ = Describe("Computer", func() {
             {0, 2},
         }
 
-        newSnake := MoveSnake(snake, []int{right, right, down})
+        newSnake := moveSnake(snake, []int{right, right, down})
 
         Expect(newSnake).To(Equal([][2]int{
             {0, 3},
