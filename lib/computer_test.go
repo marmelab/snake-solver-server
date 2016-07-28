@@ -76,6 +76,22 @@ var _ = Describe("Computer", func() {
         Expect(getPossibleMoves(grid, snake)).To(Equal([]int{0, 2, 3}))
     })
 
+    It("should check if snake has free space", func() {
+        grid := [][]int{
+            {1, 1, 1, 0, 0},
+            {1, 1, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+        }
+
+        snake := [][2]int{
+            {0, 2}, {0, 1}, {1, 1}, {1, 0}, {0, 0},
+        }
+
+        Expect(isSnakeHasFreeSpace(grid, snake)).To(Equal(false))
+    })
+
     It("should move snake", func() {
         snake := [][2]int{
             {0, 0},
@@ -147,5 +163,23 @@ var _ = Describe("Computer", func() {
 
         path := GetPath(5, 5, snake, apple)
         Expect(path[:1][0]).To(Equal(up))
+    })
+
+    /*
+        {0, 0, 0, 1, 2},
+        {0, 0, 0, 1, 1},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 0},
+    */
+    It("should not eat apple if no free space", func() {
+        snake := [][2]int{
+            {3, 4}, {2, 4}, {1, 4}, {1, 3}, {0, 3},
+        }
+
+        apple := [2]int{0, 4}
+
+        path := GetPath(5, 5, snake, apple)
+        Expect(path[:1][0]).To(Equal(left))
     })
 })
