@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
     "net/http"
     "github.com/labstack/echo"
     "github.com/labstack/echo/middleware"
@@ -33,6 +34,7 @@ func main() {
 
         grid := computer.InitializeGrid(d.Snake, d.Apple)
         path := computer.GetPath(grid, d.Snake, d.Apple)
+        fmt.Println(path)
 
         return c.JSON(http.StatusOK, path)
     })

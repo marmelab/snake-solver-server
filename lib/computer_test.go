@@ -133,6 +133,6 @@ var _ = Describe("Computer", func() {
         apple := [2]int{2, 2}
 
         path := GetPath(grid, snake, apple)
-        Expect(path).To(Equal([]int{down, down}))
+        Expect(path[:2]).To(Equal([]int{down, down}))
     })
 })
