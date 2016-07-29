@@ -99,7 +99,9 @@ var _ = Describe("Computer", func() {
             {0, 2},
         }
 
-        newSnake := moveSnake(snake, []int{right, right, down})
+        apple := [2]int{4, 0}
+
+        newSnake := moveSnake(snake, apple, []int{right, right, down})
 
         Expect(newSnake).To(Equal([][2]int{
             {0, 3},
@@ -148,7 +150,7 @@ var _ = Describe("Computer", func() {
     })
 
     /*
-        {1, 1, 1, 0, 0},
+        {1, 1, 1, 1, 0},
         {1, 0, 0, 0, 0},
         {1, 0, 0, 0, 0},
         {1, 1, 1, 1, 1},
@@ -156,7 +158,7 @@ var _ = Describe("Computer", func() {
     */
     PIt("should not enter in closed zone", func() {
         snake := [][2]int{
-            {0, 2}, {0, 1}, {0, 0}, {1, 0}, {2, 0}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4},
+            {0, 3}, {0, 2}, {0, 1}, {0, 0}, {1, 0}, {2, 0}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4},
         }
 
         apple := [2]int{4, 1}

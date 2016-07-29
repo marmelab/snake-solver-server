@@ -5,7 +5,6 @@ import "sort"
 const maxTick = 10
 const up, right, down, left = 0, 1, 2, 3
 const block = 1;
-const apple = 2;
 
 type path struct {
     Path []int
@@ -18,13 +17,19 @@ func (a byScore) Len() int { return len(a) }
 func (a byScore) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a byScore) Less(i, j int) bool { return a[i].Score < a[j].Score }
 
-func moveSnake(snake [][2]int, moves []int) [][2]int {
+func isSnakeEatApple(snake [][2]int, apple [2]int) bool {
+    return isSnakeHeadAtPosition(snake, apple)
+}
 
+func moveSnake(snake [][2]int, apple [2]int, moves []int) [][2]int {
     for _, move := range moves {
         snakeHead := getSnakeHead(snake)
         nextPosition := getAdjacentPosition(snakeHead, move)
 
-        snake = snake[1:]
+        if !isSnakeEatApple(snake, apple) {
+            snake = snake[1:]
+        }
+
         snake = append(snake, nextPosition)
     }
 
@@ -131,7 +136,7 @@ func isSnakeHasFreeSpace(grid [][]int, snake [][2]int) bool {
 }
 
 func getMoveScore(grid [][]int, move int, snake [][2]int, apple [2]int, tick int) float32 {
-    newSnake := moveSnake(snake, []int{move})
+    newSnake := moveSnake(snake, apple, []int{move})
 
     if isSnakeHeadAtPosition(newSnake, apple) {
         if !isSnakeHasFreeSpace(grid, newSnake) {
@@ -170,7 +175,7 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
         var newScores []float32
 
         for index, path := range paths {
-            newSnake := moveSnake(snake, path)
+            newSnake := moveSnake(snake, apple, path)
             grid = initializeGrid(width, height, newSnake, apple)
 
             for _, possibleMove := range getPossibleMoves(grid, newSnake) {
