@@ -156,7 +156,7 @@ var _ = Describe("Computer", func() {
         {1, 1, 1, 1, 1},
         {0, 2, 0, 0, 0},
     */
-    PIt("should not enter in closed zone", func() {
+    It("should not enter in closed zone", func() {
         snake := [][2]int{
             {0, 3}, {0, 2}, {0, 1}, {0, 0}, {1, 0}, {2, 0}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4},
         }
