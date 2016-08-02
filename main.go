@@ -11,16 +11,16 @@ import (
 
 func main() {
     type Data struct {
-        Width int `json:"width" xml:"width" form:"width"`
-        Height int `json:"height" xml:"height" form:"height"`
-        Snake [][2]int `json:"snake" xml:"snake" form:"snake"`
-        Apple [2]int `json:"apple" xml:"apple" form:"apple"`
+        Width int `json:"width"`
+        Height int `json:"height"`
+        Snake [][2]int `json:"snake"`
+        Apple [2]int `json:"apple"`
     }
 
     e := echo.New()
 
     e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-        AllowOrigins: []string{"http://localhost:9000", "http://localhost"},
+        AllowOrigins: []string{"http://localhost:9000", "http://0.0.0.0:9000"},
         AllowCredentials: true,
     }))
 
