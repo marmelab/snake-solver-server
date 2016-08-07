@@ -1,8 +1,8 @@
 package computer
 
 import "sort"
+import "time"
 
-const maxTick = 10
 const up, right, down, left = 0, 1, 2, 3
 const block = 1;
 
@@ -159,7 +159,11 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
         return getBestPath(paths, scores)
     }
 
-    for tick := 1; tick < maxTick; tick++ {
+    var totalTime time.Duration
+    tick := 1
+    for {
+        startTimeTick := time.Now()
+
         var newPaths [][]int
         var newScores []float32
 
@@ -182,6 +186,14 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
         if len(newScores) > 0 && len(newPaths) > 0 {
             paths = newPaths
             scores = newScores
+        }
+
+        elapsedTimeTick := time.Since(startTimeTick)
+        totalTime += elapsedTimeTick
+        tick++
+
+        if totalTime >= 1 * time.Second {
+            return getBestPath(paths, scores)
         }
     }
 
