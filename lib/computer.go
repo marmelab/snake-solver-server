@@ -134,14 +134,14 @@ func getMoveScore(size size, move int, snake [][2]int, apple [2]int, tick int) f
     return float32(1)
 }
 
-func getBestPath(paths [][]int, scores []float32) path {
+func getBestPath(paths [][]int, scores []float32) []int {
     var pathsSelected []path
     for index, score := range scores {
         pathsSelected = append(pathsSelected, path{paths[index], score})
     }
 
     sort.Sort(sort.Reverse(byScore(pathsSelected)))
-    return pathsSelected[0]
+    return pathsSelected[0].Path
 }
 
 func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
@@ -156,7 +156,7 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
     }
 
     if isLastMove(size, snake) {
-        return getBestPath(paths, scores).Path
+        return getBestPath(paths, scores)
     }
 
     for tick := 1; tick < maxTick; tick++ {
@@ -185,5 +185,5 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
         }
     }
 
-    return getBestPath(paths, scores).Path
+    return getBestPath(paths, scores)
 }
