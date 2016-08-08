@@ -1,27 +1,51 @@
-package lib
+package computer
 
-const maxTick = 5
-const width, height = 5, 5
+import "sort"
+
+const maxTick = 10
 const up, right, down, left = 0, 1, 2, 3
+const block = 1;
 
-func moveSnake(snake [][2]int, path []int) [][2]int {
+type path struct {
+    Path []int
+    Score float32
+}
 
-    for direction := range path {
+type size struct {
+    width int
+    height int
+}
+
+type byScore []path
+
+func (a byScore) Len() int { return len(a) }
+func (a byScore) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byScore) Less(i, j int) bool { return a[i].Score < a[j].Score }
+
+func isSnakeEatApple(snake [][2]int, apple [2]int) bool {
+    return isSnakeHeadAtPosition(snake, apple)
+}
+
+func moveSnake(snake [][2]int, apple [2]int, moves []int) [][2]int {
+    for _, move := range moves {
         snakeHead := getSnakeHead(snake)
-        nextPosition := getAdjacentPosition(snakeHead, direction)
+        nextPosition := getAdjacentPosition(snakeHead, move)
 
-        snake = snake[1:]
         snake = append(snake, nextPosition)
+
+        if !isSnakeEatApple(snake, apple) {
+            snake = snake[1:]
+        }
     }
 
     return snake
 }
 
-func getAdjacentPosition(position [2]int, direction int) [2]int {
+func getAdjacentPosition(position [2]int, move int) [2]int {
     var x = position[0] // @FIXME: use destructuring
     var y = position[1]
 
-    switch direction {
+    switch move {
     case up:
         return [2]int{x - 1, y}
     case right:
@@ -39,65 +63,125 @@ func isSnakeHeadAtPosition(snake [][2]int, position [2]int) bool {
     return getSnakeHead(snake) == position
 }
 
-func isOutsideBoundingBox(position [2]int) bool {
+func isOutsideBoundingBox(size size, position [2]int) bool {
     var x = position[0] // @FIXME: use destructuring
     var y = position[1]
 
-    if x > width || x < 0 || y > height || y < 0 {
+    if x >= size.width || x < 0 || y >= size.height || y < 0 {
         return true
     }
 
     return false
 }
 
-func getMoveScore(snake [][2]int, apple [2]int) int {
-    if isSnakeHeadAtPosition(snake, apple) {
-        return 10
+func isEmptyCell(position [2]int, snake [][2]int) bool {
+    for _, s := range snake {
+        if s == position {
+            return false
+        }
     }
 
-    return 1
+    return true
 }
 
-func getPossibleDirections(grid [width][height]int, snake [][2]int) []int {
-    var head = getSnakeHead(snake)
+func getPossibleMoves(size size, snake [][2]int) []int {
+    var snakeHead = getSnakeHead(snake)
+    var snakeTail = getSnakeTail(snake)
 
-    var possibleDirections []int
-    for _, direction := range []int{up, right, down, left} {
-        var adjacentPosition = getAdjacentPosition(head, direction)
+    var possibleMoves []int
+    for _, move := range []int{up, right, down, left} {
+        var adjacentPosition = getAdjacentPosition(snakeHead, move)
 
-        if !isOutsideBoundingBox(adjacentPosition) {
-            possibleDirections = append(possibleDirections, direction)
+        if (!isOutsideBoundingBox(size, adjacentPosition) && isEmptyCell(adjacentPosition, snake)) || adjacentPosition == snakeTail {
+            possibleMoves = append(possibleMoves, move)
         }
 	}
 
-    return possibleDirections
+    return possibleMoves
 }
 
 func getSnakeHead(snake [][2]int) [2]int {
     return snake[len(snake) - 1]
 }
 
-func getBestPath(paths [][]int, scores []int) []int {
-    return paths[0] // @TODO
+func getSnakeTail(snake [][2]int) [2]int {
+    return snake[0]
 }
 
-func GetPath(grid [width][height]int, snake [][2]int, apple [2]int) []int {
+func isSnakeHasFreeSpace(size size, snake [][2]int) bool {
+    return len(getPossibleMoves(size, snake)) > 0
+}
+
+func isLastMove(size size, snake [][2]int) bool {
+    if len(snake) == (size.width * size.height) - 1 {
+        return true
+    }
+
+    return false
+}
+
+func getMoveScore(size size, move int, snake [][2]int, apple [2]int, tick int) float32 {
+    newSnake := moveSnake(snake, apple, []int{move})
+
+    if isSnakeHeadAtPosition(newSnake, apple) {
+        if !isSnakeHasFreeSpace(size, newSnake) && !isLastMove(size, snake) {
+            return float32(0)
+        }
+
+        return (float32(1) / float32(tick)) * float32(100)
+    }
+
+    return float32(1)
+}
+
+func getBestPath(paths [][]int, scores []float32) []int {
+    var pathsSelected []path
+    for index, score := range scores {
+        pathsSelected = append(pathsSelected, path{paths[index], score})
+    }
+
+    sort.Sort(sort.Reverse(byScore(pathsSelected)))
+    return pathsSelected[0].Path
+}
+
+func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
     var paths [][]int
-    var scores []int
+    var scores []float32
 
-    var possibleDirections = getPossibleDirections(grid, snake)
+    size := size{width, height}
 
-    for _, possibleDirection := range possibleDirections {
-        paths = append(paths, []int{possibleDirection})
+    for _, possibleMove := range getPossibleMoves(size, snake) {
+        paths = append(paths, []int{possibleMove})
+        scores = append(scores, getMoveScore(size, possibleMove, snake, apple, 1))
+    }
+
+    if isLastMove(size, snake) {
+        return getBestPath(paths, scores)
     }
 
     for tick := 1; tick < maxTick; tick++ {
-        for index, path := range paths {
-            newSnake := moveSnake(snake, path)
+        var newPaths [][]int
+        var newScores []float32
 
-            for _, possibleDirection := range getPossibleDirections(grid, newSnake) {
-                paths[index] = append(paths[index], possibleDirection)
+        for index, path := range paths {
+            newSnake := moveSnake(snake, apple, path)
+
+            for _, possibleMove := range getPossibleMoves(size, newSnake) {
+                newPath := append(path, possibleMove)
+                newPaths = append(newPaths, newPath)
+                newScore := getMoveScore(size, possibleMove, newSnake, apple, tick)
+
+                if newScore > scores[index] {
+                    newScores = append(newScores, newScore)
+                } else {
+                    newScores = append(newScores, scores[index])
+                }
             }
+        }
+
+        if len(newScores) > 0 && len(newPaths) > 0 {
+            paths = newPaths
+            scores = newScores
         }
     }
 

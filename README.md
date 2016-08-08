@@ -13,3 +13,9 @@ Run
 
 - `snake-solver-server`
 - go to http://127.0.0.1:1323
+
+Test
+---
+
+- `make install`
+- `make test`
