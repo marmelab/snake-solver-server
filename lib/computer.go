@@ -1,7 +1,6 @@
 package computer
 
 import "sort"
-import "time"
 
 const up, right, down, left = 0, 1, 2, 3
 const block = 1;
@@ -134,68 +133,42 @@ func getMoveScore(size size, move int, snake [][2]int, apple [2]int, tick int) f
     return float32(1)
 }
 
-func getBestPath(paths [][]int, scores []float32) []int {
-    var pathsSelected []path
-    for index, score := range scores {
-        pathsSelected = append(pathsSelected, path{paths[index], score})
+func getBestPath(paths []path) path {
+    sort.Sort(sort.Reverse(byScore(paths)))
+    return paths[0]
+}
+
+func exploration(firstMove path, snake [][2]int, apple [2]int, size size, pathsChannel chan []path) {
+    var paths []path
+    paths = append(paths, firstMove)
+
+    maxTick := 2
+    for tick := 1; tick < maxTick; tick++ {
+        for _, p := range paths {
+            newSnake := moveSnake(snake, apple, p.Path)
+
+            for _, possibleMove := range getPossibleMoves(size, newSnake) {
+                newPath := append(p.Path, possibleMove)
+                newScore := getMoveScore(size, possibleMove, newSnake, apple, tick)
+
+                paths = append(paths, path{newPath, newScore})
+            }
+        }
     }
 
-    sort.Sort(sort.Reverse(byScore(pathsSelected)))
-    return pathsSelected[0].Path
+    pathsChannel <- paths
 }
 
 func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
-    var paths [][]int
-    var scores []float32
-
+    paths := make(chan []path)
     size := size{width, height}
 
     for _, possibleMove := range getPossibleMoves(size, snake) {
-        paths = append(paths, []int{possibleMove})
-        scores = append(scores, getMoveScore(size, possibleMove, snake, apple, 1))
+        firstMove := path{[]int{possibleMove}, getMoveScore(size, possibleMove, snake, apple, 1)}
+        go exploration(firstMove, snake, apple, size, paths);
     }
 
-    if isLastMove(size, snake) {
-        return getBestPath(paths, scores)
-    }
+    p := <- paths
 
-    var totalTime time.Duration
-    tick := 1
-    for {
-        startTimeTick := time.Now()
-
-        var newPaths [][]int
-        var newScores []float32
-
-        for index, path := range paths {
-            newSnake := moveSnake(snake, apple, path)
-
-            for _, possibleMove := range getPossibleMoves(size, newSnake) {
-                newPath := append(path, possibleMove)
-                newPaths = append(newPaths, newPath)
-                newScore := getMoveScore(size, possibleMove, newSnake, apple, tick)
-
-                if newScore > scores[index] {
-                    newScores = append(newScores, newScore)
-                } else {
-                    newScores = append(newScores, scores[index])
-                }
-            }
-        }
-
-        if len(newScores) > 0 && len(newPaths) > 0 {
-            paths = newPaths
-            scores = newScores
-        }
-
-        elapsedTimeTick := time.Since(startTimeTick)
-        totalTime += elapsedTimeTick
-        tick++
-
-        if totalTime >= 1 * time.Second {
-            return getBestPath(paths, scores)
-        }
-    }
-
-    return getBestPath(paths, scores)
+    return getBestPath(p).Path
 }
