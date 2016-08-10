@@ -138,11 +138,11 @@ func getBestPath(paths []path) path {
     return paths[0]
 }
 
-func exploration(firstMove path, snake [][2]int, apple [2]int, size size, pathsChannel chan []path) {
+func exploration(firstMove path, snake [][2]int, apple [2]int, size size, c chan []path) {
     var paths []path
     paths = append(paths, firstMove)
 
-    maxTick := 2
+    maxTick := 10
     for tick := 1; tick < maxTick; tick++ {
         for _, p := range paths {
             newSnake := moveSnake(snake, apple, p.Path)
@@ -156,19 +156,23 @@ func exploration(firstMove path, snake [][2]int, apple [2]int, size size, pathsC
         }
     }
 
-    pathsChannel <- paths
+    c <- paths
 }
 
 func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
-    paths := make(chan []path)
+    c := make(chan []path)
     size := size{width, height}
 
-    for _, possibleMove := range getPossibleMoves(size, snake) {
+    possibleMoves := getPossibleMoves(size, snake)
+    for _, possibleMove := range possibleMoves {
         firstMove := path{[]int{possibleMove}, getMoveScore(size, possibleMove, snake, apple, 1)}
-        go exploration(firstMove, snake, apple, size, paths);
+        go exploration(firstMove, snake, apple, size, c);
     }
 
-    p := <- paths
+    var paths []path
+    for i := 0; i < len(possibleMoves); i++ {
+        paths = append(paths, <- c...)
+    }
 
-    return getBestPath(p).Path
+    return getBestPath(paths).Path
 }

@@ -196,4 +196,23 @@ var _ = Describe("Computer", func() {
         path := GetPath(5, 5, snake, apple)
         Expect(path[:1][0]).To(Equal(left))
     })
+
+    It("should select best path", func() {
+        paths := []path{
+            {
+                []int{1, 1, 1, 1},
+                80,
+            },
+            {
+                []int{2, 1, 2, 1},
+                90,
+            },
+            {
+                []int{1, 2, 1, 0},
+                50,
+            },
+        }
+
+        Expect(getBestPath(paths).Score).To(Equal(float32(90)))
+    })
 })
