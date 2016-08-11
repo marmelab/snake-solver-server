@@ -1,9 +1,9 @@
 package computer
 
 import "sort"
+import "time"
 
 const up, right, down, left = 0, 1, 2, 3
-const block = 1;
 
 type path struct {
     Path []int
@@ -138,29 +138,28 @@ func getBestPath(paths []path) path {
     return paths[0]
 }
 
-func exploration(firstMove path, snake [][2]int, apple [2]int, size size, c chan []path) {
+func exploration(firstMove path, snake [][2]int, apple [2]int, size size, c chan path) {
     var paths []path
     paths = append(paths, firstMove)
 
-    maxTick := 10
-    for tick := 1; tick < maxTick; tick++ {
+    for {
         for _, p := range paths {
             newSnake := moveSnake(snake, apple, p.Path)
 
             for _, possibleMove := range getPossibleMoves(size, newSnake) {
                 newPath := append(p.Path, possibleMove)
+                tick := len(newPath)
                 newScore := getMoveScore(size, possibleMove, newSnake, apple, tick)
 
                 paths = append(paths, path{newPath, newScore})
+                c <- path{newPath, newScore}
             }
         }
     }
-
-    c <- paths
 }
 
 func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
-    c := make(chan []path)
+    c := make(chan path)
     size := size{width, height}
 
     possibleMoves := getPossibleMoves(size, snake)
@@ -169,10 +168,19 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
         go exploration(firstMove, snake, apple, size, c);
     }
 
-    var paths []path
-    for i := 0; i < len(possibleMoves); i++ {
-        paths = append(paths, <- c...)
-    }
+    timeout := make(chan bool, 1)
+    go func() {
+        time.Sleep(1 * time.Second)
+        timeout <- true
+    }()
 
-    return getBestPath(paths).Path
+    var paths []path
+	for {
+		select {
+		case p := <- c:
+            paths = append(paths, p)
+		case <- timeout:
+			return getBestPath(paths).Path
+		}
+	}
 }
