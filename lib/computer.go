@@ -172,7 +172,7 @@ func exploration(firstMove path, snake [][2]int, apple [2]int, size size, startT
     }
 }
 
-func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
+func GetPath(width int, height int, snake [][2]int, apple [2]int) ([]int, int, time.Duration, float32, int) {
     startTime := time.Now()
     c := make(chan []path)
     size := size{width, height}
@@ -189,5 +189,10 @@ func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
         paths = append(paths, p...)
 	}
 
-    return getBestPath(paths).Path
+    computationTime := time.Since(startTime)
+    bestPath := getBestPath(paths)
+    bestMoveScore := bestPath.Score
+    maxTick := len(bestPath.Path)
+
+    return bestPath.Path, len(paths), computationTime, bestMoveScore, maxTick
 }
