@@ -17,6 +17,14 @@ func main() {
         Apple [2]int `json:"apple"`
     }
 
+    type Response struct {
+        Path []int
+        PossibleMoves int
+        ComputationTime int64
+        BestMoveScore float32
+        MaxTick int
+    }
+
     e := echo.New()
 
     e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -30,10 +38,9 @@ func main() {
             return err
         }
 
-        path := computer.GetPath(d.Width, d.Height, d.Snake, d.Apple)
+        path, possibleMoves, computationTime, bestMoveScore, maxTick := computer.GetPath(d.Width, d.Height, d.Snake, d.Apple)
         fmt.Println(path)
-
-        return c.JSON(http.StatusOK, path)
+        return c.JSON(http.StatusOK, Response{path, possibleMoves, computationTime.Nanoseconds()/1e6, bestMoveScore, maxTick})
     })
 
     e.Run(standard.New(":1323"))

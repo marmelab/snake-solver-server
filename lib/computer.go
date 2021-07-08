@@ -1,10 +1,10 @@
 package computer
 
 import "sort"
+import "time"
 
-const maxTick = 10
 const up, right, down, left = 0, 1, 2, 3
-const block = 1;
+const timeout = time.Second
 
 type path struct {
     Path []int
@@ -113,11 +113,7 @@ func isSnakeHasFreeSpace(size size, snake [][2]int) bool {
 }
 
 func isLastMove(size size, snake [][2]int) bool {
-    if len(snake) == (size.width * size.height) - 1 {
-        return true
-    }
-
-    return false
+    return len(snake) == (size.width * size.height) - 1
 }
 
 func getMoveScore(size size, move int, snake [][2]int, apple [2]int, tick int) float32 {
@@ -134,56 +130,69 @@ func getMoveScore(size size, move int, snake [][2]int, apple [2]int, tick int) f
     return float32(1)
 }
 
-func getBestPath(paths [][]int, scores []float32) []int {
-    var pathsSelected []path
-    for index, score := range scores {
-        pathsSelected = append(pathsSelected, path{paths[index], score})
-    }
-
-    sort.Sort(sort.Reverse(byScore(pathsSelected)))
-    return pathsSelected[0].Path
+func getBestPath(paths []path) path {
+    sort.Sort(sort.Reverse(byScore(paths)))
+    return paths[0]
 }
 
-func GetPath(width int, height int, snake [][2]int, apple [2]int) []int {
-    var paths [][]int
-    var scores []float32
+func exploration(firstMove path, snake [][2]int, apple [2]int, size size, startTime time.Time, c chan []path) {
+    var paths []path
+    paths = append(paths, firstMove)
 
-    size := size{width, height}
+    tick := 1
+    for {
+        elapsedTime := time.Since(startTime)
 
-    for _, possibleMove := range getPossibleMoves(size, snake) {
-        paths = append(paths, []int{possibleMove})
-        scores = append(scores, getMoveScore(size, possibleMove, snake, apple, 1))
-    }
+        if elapsedTime > timeout {
+            c <- paths
+            return
+        }
 
-    if isLastMove(size, snake) {
-        return getBestPath(paths, scores)
-    }
-
-    for tick := 1; tick < maxTick; tick++ {
-        var newPaths [][]int
-        var newScores []float32
-
-        for index, path := range paths {
-            newSnake := moveSnake(snake, apple, path)
+        var newPaths []path
+        for index, p := range paths {
+            newSnake := moveSnake(snake, apple, p.Path)
 
             for _, possibleMove := range getPossibleMoves(size, newSnake) {
-                newPath := append(path, possibleMove)
-                newPaths = append(newPaths, newPath)
+                newPath := append(p.Path, possibleMove)
                 newScore := getMoveScore(size, possibleMove, newSnake, apple, tick)
 
-                if newScore > scores[index] {
-                    newScores = append(newScores, newScore)
-                } else {
-                    newScores = append(newScores, scores[index])
+                if newScore < paths[index].Score {
+                    newScore = paths[index].Score
                 }
+
+                newPaths = append(newPaths, path{newPath, newScore})
             }
         }
 
-        if len(newScores) > 0 && len(newPaths) > 0 {
+        if len(newPaths) > 0 {
             paths = newPaths
-            scores = newScores
         }
+
+        tick++
+    }
+}
+
+func GetPath(width int, height int, snake [][2]int, apple [2]int) ([]int, int, time.Duration, float32, int) {
+    startTime := time.Now()
+    c := make(chan []path)
+    size := size{width, height}
+
+    possibleMoves := getPossibleMoves(size, snake)
+    for _, possibleMove := range possibleMoves {
+        firstMove := path{[]int{possibleMove}, getMoveScore(size, possibleMove, snake, apple, 1)}
+        go exploration(firstMove, snake, apple, size, startTime, c);
     }
 
-    return getBestPath(paths, scores)
+    var paths []path
+	for i := 0; i < len(possibleMoves); i++ {
+	    p := <- c
+        paths = append(paths, p...)
+	}
+
+    computationTime := time.Since(startTime)
+    bestPath := getBestPath(paths)
+    bestMoveScore := bestPath.Score
+    maxTick := len(bestPath.Path)
+
+    return bestPath.Path, len(paths), computationTime, bestMoveScore, maxTick
 }
